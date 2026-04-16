@@ -77,7 +77,7 @@ public class EventService {
                                 + " was not found"));
 
         if (dto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException(
+            throw new IllegalArgumentException(
                     "Event date must be at least 2 hours from now");
         }
 
@@ -110,7 +110,7 @@ public class EventService {
         if (request.getEventDate() != null
                 && request.getEventDate().isBefore(
                 LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException(
+            throw new IllegalArgumentException(
                     "Event date must be at least 2 hours from now");
         }
 
@@ -219,7 +219,7 @@ public class EventService {
                 if (request.getEventDate() != null
                         && request.getEventDate().isBefore(
                         LocalDateTime.now().plusHours(1))) {
-                    throw new ConflictException(
+                    throw new IllegalArgumentException(
                             "Event date must be at least 1 hour from now");
                 }
                 event.setState(EventState.PUBLISHED);
@@ -307,13 +307,16 @@ public class EventService {
         try {
             var response = statsClient.getStats(
                     LocalDateTime.now().minusYears(10),
-                    LocalDateTime.now(),
+                    LocalDateTime.now().plusSeconds(1),
                     List.of(uri),
                     true);
             if (response.getBody() instanceof List<?> list && !list.isEmpty()) {
                 Object first = list.get(0);
-                if (first instanceof ViewStatsDto dto) {
-                    return dto.getHits();
+                if (first instanceof java.util.LinkedHashMap<?, ?> map) {
+                    Object hits = map.get("hits");
+                    if (hits instanceof Number number) {
+                        return number.longValue();
+                    }
                 }
             }
         } catch (Exception ignored) {
