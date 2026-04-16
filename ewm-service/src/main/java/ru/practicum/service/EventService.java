@@ -31,7 +31,6 @@ import ru.practicum.repository.CategoryRepository;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.RequestRepository;
 import ru.practicum.repository.UserRepository;
-import ru.practicum.ViewStatsDto;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
