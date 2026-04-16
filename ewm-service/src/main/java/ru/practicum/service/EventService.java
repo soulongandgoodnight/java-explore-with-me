@@ -207,6 +207,13 @@ public class EventService {
                 .orElseThrow(() -> new NotFoundException(
                         "Event with id=" + eventId + " was not found"));
 
+        if (request.getEventDate() != null
+                && request.getEventDate().isBefore(
+                LocalDateTime.now().plusHours(1))) {
+            throw new IllegalArgumentException(
+                    "Event date must be at least 1 hour from now");
+        }
+
         if (request.getStateAction() != null) {
             if (request.getStateAction().equals(AdminStateAction.PUBLISH_EVENT)) {
                 if (!event.getState().equals(EventState.PENDING)) {
@@ -214,12 +221,6 @@ public class EventService {
                             "Cannot publish the event because it's not "
                                     + "in the right state: "
                                     + event.getState());
-                }
-                if (request.getEventDate() != null
-                        && request.getEventDate().isBefore(
-                        LocalDateTime.now().plusHours(1))) {
-                    throw new IllegalArgumentException(
-                            "Event date must be at least 1 hour from now");
                 }
                 event.setState(EventState.PUBLISHED);
                 event.setPublishedOn(LocalDateTime.now());
