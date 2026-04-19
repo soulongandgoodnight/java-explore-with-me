@@ -2,7 +2,6 @@ package ru.practicum.mapper;
 
 import lombok.experimental.UtilityClass;
 import ru.practicum.dto.UserDto;
-import ru.practicum.dto.UserShortDto;
 import ru.practicum.dto.NewUserRequest;
 import ru.practicum.model.User;
 
@@ -24,10 +23,4 @@ public class UserMapper {
                 .build();
     }
 
-    public UserShortDto toUserShortDto(User user) {
-        return UserShortDto.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .build();
-    }
 }

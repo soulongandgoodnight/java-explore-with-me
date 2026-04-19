@@ -1,5 +1,6 @@
 package ru.practicum.service;
 
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -36,6 +37,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,10 +61,7 @@ public class EventService {
         checkUserExists(userId);
         PageRequest page = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findAllByInitiatorId(userId, page);
-        return events.stream()
-                .map(e -> EventMapper.toEventShortDto(e,
-                        getConfirmedRequests(e.getId()), 0L))
-                .collect(Collectors.toList());
+        return toShortDtosWithStats(events);
     }
 
     @Transactional
@@ -90,7 +89,7 @@ public class EventService {
                 .orElseThrow(() -> new NotFoundException(
                         "Event with id=" + eventId + " was not found"));
         return EventMapper.toEventFullDto(event,
-                getConfirmedRequests(eventId), 0L);
+                getConfirmedRequests(eventId), getViews(eventId));
     }
 
     @Transactional
@@ -194,10 +193,8 @@ public class EventService {
         PageRequest page = PageRequest.of(from / size, size);
         Specification<Event> spec = buildAdminSpec(
                 users, states, categories, rangeStart, rangeEnd);
-        return eventRepository.findAll(spec, page).getContent().stream()
-                .map(e -> EventMapper.toEventFullDto(e,
-                        getConfirmedRequests(e.getId()), 0L))
-                .collect(Collectors.toList());
+        List<Event> events = eventRepository.findAll(spec, page).getContent();
+        return toFullDtosWithStats(events);
     }
 
     @Transactional
@@ -259,15 +256,24 @@ public class EventService {
 
         PageRequest page = PageRequest.of(from / size, size);
         Specification<Event> spec = buildPublicSpec(
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable);
+                text, categories, paid, rangeStart, rangeEnd);
 
         List<Event> events = eventRepository.findAll(spec, page).getContent();
 
-        List<EventShortDto> result = events.stream()
-                .map(e -> EventMapper.toEventShortDto(e,
-                        getConfirmedRequests(e.getId()),
-                        getViews(e.getId())))
+        List<Event> filtered = events.stream()
+                .filter(e -> {
+                    if (!Boolean.TRUE.equals(onlyAvailable)) {
+                        return true;
+                    }
+                    if (e.getParticipantLimit() == 0) {
+                        return true;
+                    }
+                    return getConfirmedRequests(e.getId())
+                            < e.getParticipantLimit();
+                })
                 .collect(Collectors.toList());
+
+        List<EventShortDto> result = toShortDtosWithStats(filtered);
 
         if ("VIEWS".equals(sort)) {
             result.sort((a, b) -> Long.compare(
@@ -311,7 +317,7 @@ public class EventService {
                     List.of(uri),
                     true);
             if (response.getBody() instanceof List<?> list && !list.isEmpty()) {
-                Object first = list.get(0);
+                Object first = list.getFirst();
                 if (first instanceof java.util.LinkedHashMap<?, ?> map) {
                     Object hits = map.get("hits");
                     if (hits instanceof Number number) {
@@ -323,6 +329,60 @@ public class EventService {
         }
         return 0L;
     }
+
+    private Map<String, Long> getViewsForEvents(List<Event> events) {
+        if (events.isEmpty()) {
+            return Map.of();
+        }
+
+        List<String> uris = events.stream()
+                .map(e -> "/events/" + e.getId())
+                .collect(Collectors.toList());
+
+        try {
+            var response = statsClient.getStats(
+                    LocalDateTime.now().minusYears(10),
+                    LocalDateTime.now().plusSeconds(1),
+                    uris,
+                    true);
+
+            if (response.getBody() instanceof List<?> list && !list.isEmpty()) {
+                return list.stream()
+                        .filter(item -> item instanceof java.util.LinkedHashMap)
+                        .map(item -> (java.util.LinkedHashMap<?, ?>) item)
+                        .filter(map -> map.get("uri") != null
+                                && map.get("hits") != null)
+                        .collect(Collectors.toMap(
+                                map -> (String) map.get("uri"),
+                                map -> ((Number) map.get("hits")).longValue()
+                        ));
+            }
+        } catch (Exception ignored) {
+        }
+        return Map.of();
+    }
+
+    private List<EventShortDto> toShortDtosWithStats(List<Event> events) {
+        Map<String, Long> viewsMap = getViewsForEvents(events);
+        return events.stream()
+                .map(e -> EventMapper.toEventShortDto(
+                        e,
+                        getConfirmedRequests(e.getId()),
+                        viewsMap.getOrDefault("/events/" + e.getId(), 0L)))
+                .collect(Collectors.toList());
+    }
+
+    private List<EventFullDto> toFullDtosWithStats(List<Event> events) {
+        Map<String, Long> viewsMap = getViewsForEvents(events);
+        return events.stream()
+                .map(e -> EventMapper.toEventFullDto(
+                        e,
+                        getConfirmedRequests(e.getId()),
+                        viewsMap.getOrDefault("/events/" + e.getId(), 0L)))
+                .collect(Collectors.toList());
+    }
+
+
 
     private void checkUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
@@ -394,10 +454,9 @@ public class EventService {
                                                  List<Long> categories,
                                                  Boolean paid,
                                                  LocalDateTime rangeStart,
-                                                 LocalDateTime rangeEnd,
-                                                 Boolean onlyAvailable) {
+                                                 LocalDateTime rangeEnd) {
         return (root, query, cb) -> {
-            var predicates = new ArrayList<>();
+            List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.equal(root.get("state"), EventState.PUBLISHED));
 
@@ -424,8 +483,7 @@ public class EventService {
                 predicates.add(cb.lessThan(root.get("eventDate"), rangeEnd));
             }
 
-            return cb.and(predicates.toArray(
-                    new jakarta.persistence.criteria.Predicate[0]));
+            return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
 
@@ -461,8 +519,7 @@ public class EventService {
                 predicates.add(cb.lessThan(root.get("eventDate"), rangeEnd));
             }
 
-            return cb.and(predicates.toArray(
-                    new jakarta.persistence.criteria.Predicate[0]));
+            return cb.and(predicates.toArray(Predicate[]::new));
         };
     }
 }
