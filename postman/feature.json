@@ -2193,7 +2193,7 @@
   "variable": [
     {
       "key": "url",
-      "value": ""
+      "value": "http://localhost:8080"
     },
     {
       "key": "userName",
