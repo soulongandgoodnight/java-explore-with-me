@@ -28,10 +28,7 @@ import ru.practicum.model.ParticipationRequest;
 import ru.practicum.model.RequestStatus;
 import ru.practicum.model.User;
 import ru.practicum.model.UserStateAction;
-import ru.practicum.repository.CategoryRepository;
-import ru.practicum.repository.EventRepository;
-import ru.practicum.repository.RequestRepository;
-import ru.practicum.repository.UserRepository;
+import ru.practicum.repository.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
@@ -54,6 +51,8 @@ public class EventService {
     private final RequestRepository requestRepository;
 
     private final StatsClient statsClient;
+
+    private final EventRatingRepository ratingRepository;
 
     private static final String APP_NAME = "ewm-main-service";
 
@@ -80,7 +79,7 @@ public class EventService {
         }
 
         Event event = EventMapper.toEvent(dto, user, category);
-        return EventMapper.toEventFullDto(eventRepository.save(event), 0L, 0L);
+        return EventMapper.toEventFullDto(eventRepository.save(event), 0L, 0L, 0L);
     }
 
     public EventFullDto getUserEventById(Long userId, Long eventId) {
@@ -88,8 +87,11 @@ public class EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException(
                         "Event with id=" + eventId + " was not found"));
-        return EventMapper.toEventFullDto(event,
-                getConfirmedRequests(eventId), getViews(eventId));
+        return EventMapper.toEventFullDto(
+                event,
+                getConfirmedRequests(eventId),
+                getViews(eventId),
+                ratingRepository.calculateRatingByEventId(eventId));
     }
 
     @Transactional
@@ -113,8 +115,11 @@ public class EventService {
         }
 
         applyUserUpdate(event, request);
-        return EventMapper.toEventFullDto(eventRepository.save(event),
-                getConfirmedRequests(eventId), 0L);
+        return EventMapper.toEventFullDto(
+                eventRepository.save(event),
+                getConfirmedRequests(eventId),
+                0L,
+                ratingRepository.calculateRatingByEventId(eventId));
     }
 
     public List<ParticipationRequestDto> getEventRequests(Long userId,
@@ -232,8 +237,11 @@ public class EventService {
         }
 
         applyAdminUpdate(event, request);
-        return EventMapper.toEventFullDto(eventRepository.save(event),
-                getConfirmedRequests(eventId), 0L);
+        return EventMapper.toEventFullDto(
+                eventRepository.save(event),
+                getConfirmedRequests(eventId),
+                0L,
+                ratingRepository.calculateRatingByEventId(eventId));
     }
 
     public List<EventShortDto> getPublicEvents(String text,
@@ -279,6 +287,10 @@ public class EventService {
             result.sort((a, b) -> Long.compare(
                     b.getViews() != null ? b.getViews() : 0,
                     a.getViews() != null ? a.getViews() : 0));
+        } else if ("RATING".equals(sort)) {
+            result.sort((a, b) -> Long.compare(
+                    b.getRating() != null ? b.getRating() : 0,
+                    a.getRating() != null ? a.getRating() : 0));
         }
 
         return result;
@@ -299,8 +311,11 @@ public class EventService {
                 request.getRemoteAddr(), LocalDateTime.now());
 
         Long views = getViews(eventId);
-        return EventMapper.toEventFullDto(event,
-                getConfirmedRequests(eventId), views);
+        return EventMapper.toEventFullDto(
+                event,
+                getConfirmedRequests(eventId),
+                views,
+                ratingRepository.calculateRatingByEventId(eventId));
     }
 
     private Long getConfirmedRequests(Long eventId) {
@@ -363,22 +378,44 @@ public class EventService {
     }
 
     private List<EventShortDto> toShortDtosWithStats(List<Event> events) {
+        if (events.isEmpty()) {
+            return List.of();
+        }
+
         Map<String, Long> viewsMap = getViewsForEvents(events);
+
+        List<Long> eventsIds = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+        Map<Long, Long> ratingsMap = ratingRepository.getRatingsMapByEventIds(eventsIds);
+
         return events.stream()
                 .map(e -> EventMapper.toEventShortDto(
                         e,
                         getConfirmedRequests(e.getId()),
-                        viewsMap.getOrDefault("/events/" + e.getId(), 0L)))
+                        viewsMap.getOrDefault("/events/" + e.getId(), 0L),
+                        ratingsMap.getOrDefault(e.getId(),0L)))
                 .collect(Collectors.toList());
     }
 
     private List<EventFullDto> toFullDtosWithStats(List<Event> events) {
+        if (events.isEmpty()) {
+            return List.of();
+        }
         Map<String, Long> viewsMap = getViewsForEvents(events);
+
+        List<Long> eventIds = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+        Map<Long, Long> ratingsMap =
+                ratingRepository.getRatingsMapByEventIds(eventIds);
+
         return events.stream()
                 .map(e -> EventMapper.toEventFullDto(
                         e,
                         getConfirmedRequests(e.getId()),
-                        viewsMap.getOrDefault("/events/" + e.getId(), 0L)))
+                        viewsMap.getOrDefault("/events/" + e.getId(), 0L),
+                        ratingsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 

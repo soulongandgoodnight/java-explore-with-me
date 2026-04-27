@@ -1,0 +1,935 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Rating Events Feature API",
+    "description": "Дополнительная функциональность: рейтинги событий и организаторов. Участники могут ставить лайки и дизлайки опубликованным событиям, в которых они участвовали. На основе оценок формируется рейтинг событий и рейтинг организаторов.",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "ExploreWithMe main service"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Private: Рейтинги",
+      "description": "Закрытый API для работы с оценками событий"
+    },
+    {
+      "name": "Public: Рейтинги",
+      "description": "Публичный API для просмотра рейтингов событий и организаторов"
+    }
+  ],
+  "paths": {
+    "/users/{userId}/ratings/{eventId}": {
+      "post": {
+        "summary": "Поставить лайк или дизлайк событию",
+        "description": "Оценить событие может только пользователь с подтверждённой заявкой на участие. Организатор события не может оценивать своё событие. Событие должно быть опубликовано. Если пользователь уже поставил оценку — можно изменить её, передав другое значение positive. Нельзя дважды поставить одну и ту же оценку.",
+        "tags": [
+          "Private: Рейтинги"
+        ],
+        "operationId": "rateEvent",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор пользователя, ставящего оценку",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор оцениваемого события",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Тип оценки: true — лайк, false — дизлайк",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatingActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Оценка успешно сохранена или обновлена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventRatingDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Запрос составлен некорректно (например, отсутствует обязательное поле positive)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "errors": [],
+                  "status": "BAD_REQUEST",
+                  "reason": "Incorrectly made request.",
+                  "message": "Field: positive. Error: must not be null.",
+                  "timestamp": "2024-06-01 12:00:00"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пользователь или событие не найдены",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "errors": [],
+                  "status": "NOT_FOUND",
+                  "reason": "The required object was not found.",
+                  "message": "Event with id=999 was not found",
+                  "timestamp": "2024-06-01 12:00:00"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Нарушение бизнес-правил: организатор пытается оценить своё событие, пользователь не участвовал в событии, или пытается поставить ту же оценку повторно",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "errors": [],
+                  "status": "CONFLICT",
+                  "reason": "For the requested operation the conditions are not met.",
+                  "message": "Initiator cannot rate own event",
+                  "timestamp": "2024-06-01 12:00:00"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Удалить свою оценку события",
+        "description": "Пользователь может удалить ранее поставленную оценку (лайк или дизлайк). Если оценки не существует — возвращается 404.",
+        "tags": [
+          "Private: Рейтинги"
+        ],
+        "operationId": "removeRating",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор пользователя",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор события",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Оценка успешно удалена"
+          },
+          "404": {
+            "description": "Пользователь, событие или оценка не найдены",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "errors": [],
+                  "status": "NOT_FOUND",
+                  "reason": "The required object was not found.",
+                  "message": "Rating not found",
+                  "timestamp": "2024-06-01 12:00:00"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Получить рейтинг события (приватный доступ)",
+        "description": "Возвращает текущий рейтинг события: количество лайков, дизлайков и итоговый рейтинг (лайки минус дизлайки).",
+        "tags": [
+          "Private: Рейтинги"
+        ],
+        "operationId": "getEventRatingPrivate",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор пользователя",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор события",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Рейтинг события получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventRatingDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Событие не найдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/ratings": {
+      "get": {
+        "summary": "Получить список своих оценок",
+        "description": "Возвращает список всех оценок которые пользователь поставил событиям. Для каждой оценки указывается id и название события, а также тип оценки (лайк или дизлайк).",
+        "tags": [
+          "Private: Рейтинги"
+        ],
+        "operationId": "getMyRatings",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор пользователя",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список оценок получен. Если оценок нет — возвращается пустой список.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyRatingDto"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ratings/events/{eventId}": {
+      "get": {
+        "summary": "Получить рейтинг конкретного события",
+        "description": "Публичный эндпоинт. Возвращает количество лайков, дизлайков и итоговый рейтинг события.",
+        "tags": [
+          "Public: Рейтинги"
+        ],
+        "operationId": "getEventRating",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор события",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Рейтинг события получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventRatingDto"
+                },
+                "example": {
+                  "eventId": 1,
+                  "eventTitle": "Сплав на байдарках",
+                  "likes": 10,
+                  "dislikes": 2,
+                  "rating": 8
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Событие не найдено",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "errors": [],
+                  "status": "NOT_FOUND",
+                  "reason": "The required object was not found.",
+                  "message": "Event with id=999 was not found",
+                  "timestamp": "2024-06-01 12:00:00"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ratings/events/top": {
+      "get": {
+        "summary": "Получить топ событий по рейтингу",
+        "description": "Публичный эндпоинт. Возвращает список опубликованных событий, отсортированных по убыванию рейтинга. Учитываются только опубликованные события. Параметр size ограничивает количество возвращаемых событий.",
+        "tags": [
+          "Public: Рейтинги"
+        ],
+        "operationId": "getTopEvents",
+        "parameters": [
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "description": "Максимальное количество событий в ответе",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Топ событий получен. Если оценок нет — возвращается пустой список.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventRatingDto"
+                  }
+                },
+                "example": [
+                  {
+                    "eventId": 2,
+                    "eventTitle": "Знаменитое шоу Летающая кукуруза",
+                    "likes": 15,
+                    "dislikes": 1,
+                    "rating": 14
+                  },
+                  {
+                    "eventId": 1,
+                    "eventTitle": "Сплав на байдарках",
+                    "likes": 10,
+                    "dislikes": 2,
+                    "rating": 8
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный параметр size",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ratings/users/{userId}": {
+      "get": {
+        "summary": "Получить рейтинг организатора",
+        "description": "Публичный эндпоинт. Возвращает суммарный рейтинг организатора по всем его событиям и количество его событий, получивших оценки.",
+        "tags": [
+          "Public: Рейтинги"
+        ],
+        "operationId": "getUserRating",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "Идентификатор организатора",
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Рейтинг организатора получен",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRatingDto"
+                },
+                "example": {
+                  "userId": 1,
+                  "userName": "Иван Петров",
+                  "totalRating": 22,
+                  "eventsCount": 3
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Пользователь не найден",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "example": {
+                  "errors": [],
+                  "status": "NOT_FOUND",
+                  "reason": "The required object was not found.",
+                  "message": "User with id=999 was not found",
+                  "timestamp": "2024-06-01 12:00:00"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ratings/users/top": {
+      "get": {
+        "summary": "Получить топ организаторов по рейтингу",
+        "description": "Публичный эндпоинт. Возвращает список организаторов, отсортированных по убыванию суммарного рейтинга их опубликованных событий. В список попадают только организаторы у которых есть хотя бы одно оценённое опубликованное событие.",
+        "tags": [
+          "Public: Рейтинги"
+        ],
+        "operationId": "getTopOrganizers",
+        "parameters": [
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "description": "Максимальное количество организаторов в ответе",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Топ организаторов получен. Если оценок нет — возвращается пустой список.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserRatingDto"
+                  }
+                },
+                "example": [
+                  {
+                    "userId": 1,
+                    "userName": "Иван Петров",
+                    "totalRating": 22,
+                    "eventsCount": 3
+                  },
+                  {
+                    "userId": 5,
+                    "userName": "Мария Сидорова",
+                    "totalRating": 10,
+                    "eventsCount": 1
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Некорректный параметр size",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "Получение событий с возможностью фильтрации (обновлённый — добавлена сортировка по рейтингу)",
+        "description": "Публичный эндпоинт. Помимо существующих вариантов сортировки EVENT_DATE и VIEWS добавлена сортировка RATING — по убыванию рейтинга события. Каждое событие в ответе теперь содержит поле rating.",
+        "tags": [
+          "Public: Рейтинги"
+        ],
+        "operationId": "getEventsWithRatingSort",
+        "parameters": [
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "description": "Текст для поиска в аннотации и описании",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categories",
+            "in": "query",
+            "required": false,
+            "description": "Список id категорий",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          {
+            "name": "paid",
+            "in": "query",
+            "required": false,
+            "description": "Только платные или бесплатные события",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "rangeStart",
+            "in": "query",
+            "required": false,
+            "description": "Начало диапазона дат (yyyy-MM-dd HH:mm:ss)",
+            "schema": {
+              "type": "string",
+              "example": "2024-01-01 00:00:00"
+            }
+          },
+          {
+            "name": "rangeEnd",
+            "in": "query",
+            "required": false,
+            "description": "Конец диапазона дат (yyyy-MM-dd HH:mm:ss)",
+            "schema": {
+              "type": "string",
+              "example": "2030-12-31 23:59:59"
+            }
+          },
+          {
+            "name": "onlyAvailable",
+            "in": "query",
+            "required": false,
+            "description": "Только события с незаполненным лимитом участников",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "Вариант сортировки: по дате события, по количеству просмотров или по рейтингу (новое)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "EVENT_DATE",
+                "VIEWS",
+                "RATING"
+              ]
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "События найдены. Каждое событие содержит поле rating.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EventShortDtoWithRating"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Запрос составлен некорректно",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RatingActionDto": {
+        "type": "object",
+        "required": [
+          "positive"
+        ],
+        "properties": {
+          "positive": {
+            "type": "boolean",
+            "description": "Тип оценки: true — лайк (положительная оценка), false — дизлайк (отрицательная оценка)",
+            "example": true
+          }
+        },
+        "description": "Запрос на добавление или изменение оценки события"
+      },
+      "EventRatingDto": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "eventTitle",
+          "likes",
+          "dislikes",
+          "rating"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор события",
+            "example": 1
+          },
+          "eventTitle": {
+            "type": "string",
+            "description": "Название события",
+            "example": "Сплав на байдарках"
+          },
+          "likes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Количество лайков",
+            "example": 10
+          },
+          "dislikes": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Количество дизлайков",
+            "example": 2
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Итоговый рейтинг события (лайки минус дизлайки)",
+            "example": 8
+          }
+        },
+        "description": "Рейтинг события"
+      },
+      "UserRatingDto": {
+        "type": "object",
+        "required": [
+          "userId",
+          "userName",
+          "totalRating",
+          "eventsCount"
+        ],
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор организатора",
+            "example": 1
+          },
+          "userName": {
+            "type": "string",
+            "description": "Имя организатора",
+            "example": "Иван Петров"
+          },
+          "totalRating": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Суммарный рейтинг по всем опубликованным событиям организатора",
+            "example": 22
+          },
+          "eventsCount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Количество опубликованных событий организатора, получивших хотя бы одну оценку",
+            "example": 3
+          }
+        },
+        "description": "Рейтинг организатора"
+      },
+      "MyRatingDto": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "eventTitle",
+          "positive"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор оценённого события",
+            "example": 1
+          },
+          "eventTitle": {
+            "type": "string",
+            "description": "Название оценённого события",
+            "example": "Сплав на байдарках"
+          },
+          "positive": {
+            "type": "boolean",
+            "description": "Тип оценки: true — лайк, false — дизлайк",
+            "example": true
+          }
+        },
+        "description": "Оценка события от текущего пользователя"
+      },
+      "EventShortDtoWithRating": {
+        "type": "object",
+        "required": [
+          "annotation",
+          "category",
+          "eventDate",
+          "initiator",
+          "paid",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор события",
+            "example": 1
+          },
+          "annotation": {
+            "type": "string",
+            "description": "Краткое описание события",
+            "example": "Эксклюзивность нашего шоу гарантирует привлечение максимальной зрительской аудитории"
+          },
+          "category": {
+            "$ref": "#/components/schemas/CategoryDto"
+          },
+          "confirmedRequests": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Количество одобренных заявок на участие",
+            "example": 5
+          },
+          "eventDate": {
+            "type": "string",
+            "description": "Дата и время события (yyyy-MM-dd HH:mm:ss)",
+            "example": "2030-06-15 20:00:00"
+          },
+          "initiator": {
+            "$ref": "#/components/schemas/UserShortDto"
+          },
+          "paid": {
+            "type": "boolean",
+            "description": "Нужно ли оплачивать участие",
+            "example": false
+          },
+          "title": {
+            "type": "string",
+            "description": "Заголовок события",
+            "example": "Знаменитое шоу Летающая кукуруза"
+          },
+          "views": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Количество просмотров события",
+            "example": 999
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Итоговый рейтинг события (лайки минус дизлайки). Новое поле добавленное в рамках feature_rating_events.",
+            "example": 8
+          }
+        },
+        "description": "Краткая информация о событии с полем рейтинга"
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "description": "Список стектрейсов или описания ошибок",
+            "example": [],
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Код статуса HTTP-ответа",
+            "example": "NOT_FOUND",
+            "enum": [
+              "BAD_REQUEST",
+              "NOT_FOUND",
+              "CONFLICT",
+              "INTERNAL_SERVER_ERROR"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Общее описание причины ошибки",
+            "example": "The required object was not found."
+          },
+          "message": {
+            "type": "string",
+            "description": "Подробное сообщение об ошибке",
+            "example": "Event with id=1 was not found"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Дата и время ошибки (yyyy-MM-dd HH:mm:ss)",
+            "example": "2024-06-01 12:00:00"
+          }
+        },
+        "description": "Сведения об ошибке"
+      },
+      "CategoryDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор категории",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Название категории",
+            "example": "Концерты"
+          }
+        }
+      },
+      "UserShortDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Идентификатор пользователя",
+            "example": 3
+          },
+          "name": {
+            "type": "string",
+            "description": "Имя пользователя",
+            "example": "Фёдоров Матвей"
+          }
+        }
+      }
+    }
+  }
+}

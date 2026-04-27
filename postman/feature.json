@@ -1,0 +1,2283 @@
+{
+  "info": {
+    "_postman_id": "3107a428-25f6-418d-947e-de417d74de9c",
+    "name": "feature",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "50263310",
+    "_collection_link": "https://go.postman.co/collection/50263310-3107a428-25f6-418d-947e-de417d74de9c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Create organizer",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const rnd = new RandomUtils();",
+                  "    try {",
+                  "        const user = rnd.getUser();",
+                  "        pm.collectionVariables.set(\"userName\", user.name);",
+                  "        pm.collectionVariables.set(\"userEmail\", user.email);",
+                  "    } catch (err) {",
+                  "        console.error(\"Ошибка при подготовке данных организатора.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has body with json\", function () {",
+                  "    pm.response.to.be.withBody;",
+                  "    pm.response.to.be.json;",
+                  "});",
+                  "",
+                  "pm.test(\"Organizer has id, name, email\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('name');",
+                  "    pm.expect(json).to.have.property('email');",
+                  "",
+                  "    const name = pm.collectionVariables.get(\"userName\");",
+                  "    const email = pm.collectionVariables.get(\"userEmail\");",
+                  "    pm.expect(json.name, '\"name\" must be ' + name).to.eql(name);",
+                  "    pm.expect(json.email, '\"email\" must be ' + email).to.eql(email);",
+                  "",
+                  "    pm.collectionVariables.set(\"userId\", json.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"{{userName}}\",\n    \"email\": \"{{userEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/users",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create participant1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const rnd = new RandomUtils();",
+                  "    try {",
+                  "        const user = rnd.getUser();",
+                  "        pm.collectionVariables.set(\"userName2\", user.name);",
+                  "        pm.collectionVariables.set(\"userEmail2\", user.email);",
+                  "    } catch (err) {",
+                  "        console.error(\"Ошибка при подготовке данных участника 1.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Participant1 created\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "",
+                  "    const name = pm.collectionVariables.get(\"userName2\");",
+                  "    const email = pm.collectionVariables.get(\"userEmail2\");",
+                  "    pm.expect(json.name).to.eql(name);",
+                  "    pm.expect(json.email).to.eql(email);",
+                  "",
+                  "    pm.collectionVariables.set(\"userId2\", json.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"{{userName2}}\",\n    \"email\": \"{{userEmail2}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/users",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create participant2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const rnd = new RandomUtils();",
+                  "    try {",
+                  "        const user = rnd.getUser();",
+                  "        pm.collectionVariables.set(\"userName3\", user.name);",
+                  "        pm.collectionVariables.set(\"userEmail3\", user.email);",
+                  "    } catch (err) {",
+                  "        console.error(\"Ошибка при подготовке данных участника 2.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Participant2 created\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.collectionVariables.set(\"userId3\", json.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"{{userName3}}\",\n    \"email\": \"{{userEmail3}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/users",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create category",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const rnd = new RandomUtils();",
+                  "    try {",
+                  "        const cat = rnd.getCategory();",
+                  "        pm.collectionVariables.set(\"catName\", cat.name);",
+                  "    } catch (err) {",
+                  "        console.error(\"Ошибка при подготовке категории.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Category created with correct name\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('name');",
+                  "",
+                  "    const name = pm.collectionVariables.get(\"catName\");",
+                  "    pm.expect(json.name, '\"name\" must be ' + name).to.eql(name);",
+                  "",
+                  "    pm.collectionVariables.set(\"catId\", json.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"{{catName}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/categories",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "admin",
+                "categories"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create event1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const rnd = new RandomUtils();",
+                  "    const catId = Number(pm.collectionVariables.get(\"catId\"));",
+                  "    try {",
+                  "        const event = rnd.getEvent(catId);",
+                  "        pm.collectionVariables.set(\"eventTitle\", event.title);",
+                  "        pm.collectionVariables.set(\"eventAnnotation\", event.annotation);",
+                  "        pm.collectionVariables.set(\"eventDescription\", event.description);",
+                  "        pm.collectionVariables.set(\"localDate\", event.eventDate);",
+                  "    } catch (err) {",
+                  "        console.error(\"Ошибка при подготовке события 1.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Event1 created with PENDING state\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('state');",
+                  "    pm.expect(json.state, '\"state\" must be PENDING').to.eql('PENDING');",
+                  "    pm.expect(json).to.have.property('rating');",
+                  "",
+                  "    const title = pm.collectionVariables.get(\"eventTitle\");",
+                  "    pm.expect(json.title, '\"title\" must be ' + title).to.eql(title);",
+                  "",
+                  "    pm.collectionVariables.set(\"eventId\", json.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"annotation\": \"{{eventAnnotation}}\",\n    \"category\": {{catId}},\n    \"description\": \"{{eventDescription}}\",\n    \"eventDate\": \"{{localDate}}\",\n    \"location\": {\n        \"lat\": 55.754167,\n        \"lon\": 37.620000\n    },\n    \"paid\": false,\n    \"participantLimit\": 0,\n    \"requestModeration\": false,\n    \"title\": \"{{eventTitle}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId}}/events",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish event1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Event1 is published\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.state, '\"state\" must be PUBLISHED').to.eql('PUBLISHED');",
+                  "    pm.expect(json).to.have.property('publishedOn');",
+                  "    pm.expect(json).to.have.property('rating');",
+                  "",
+                  "    const id = pm.collectionVariables.get(\"eventId\");",
+                  "    pm.expect(json.id, '\"id\" must be ' + id).to.eql(Number(id));",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"stateAction\": \"PUBLISH_EVENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/events/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "admin",
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participant1 request event1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Request has CONFIRMED status (no moderation)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json.status, '\"status\" must be CONFIRMED').to.eql('CONFIRMED');",
+                  "    pm.expect(json.event, '\"event\" must match').to.eql(",
+                  "        Number(pm.collectionVariables.get(\"eventId\")));",
+                  "    pm.expect(json.requester, '\"requester\" must match').to.eql(",
+                  "        Number(pm.collectionVariables.get(\"userId2\")));",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/requests?eventId={{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "{{eventId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participant2 request event1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Request created for participant2\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json.status).to.eql('CONFIRMED');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/users/{{userId3}}/requests?eventId={{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId3}}",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "{{eventId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create event2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const main = async () => {",
+                  "    const rnd = new RandomUtils();",
+                  "    const catId = Number(pm.collectionVariables.get(\"catId\"));",
+                  "    try {",
+                  "        const event = rnd.getEvent(catId, 6);",
+                  "        pm.collectionVariables.set(\"eventTitle2\", event.title);",
+                  "        pm.collectionVariables.set(\"eventAnnotation2\", event.annotation);",
+                  "        pm.collectionVariables.set(\"eventDescription2\", event.description);",
+                  "        pm.collectionVariables.set(\"localDate2\", event.eventDate);",
+                  "    } catch (err) {",
+                  "        console.error(\"Ошибка при подготовке события 2.\", err);",
+                  "    }",
+                  "};",
+                  "",
+                  "const interval = setInterval(() => {}, 1000);",
+                  "setTimeout(async () => {",
+                  "    try {",
+                  "        await main();",
+                  "    } catch (e) {",
+                  "        console.error(e);",
+                  "    } finally {",
+                  "        clearInterval(interval);",
+                  "    }",
+                  "}, 100);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Event2 created\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.state).to.eql('PENDING');",
+                  "    pm.collectionVariables.set(\"eventId2\", json.id);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"annotation\": \"{{eventAnnotation2}}\",\n    \"category\": {{catId}},\n    \"description\": \"{{eventDescription2}}\",\n    \"eventDate\": \"{{localDate2}}\",\n    \"location\": {\n        \"lat\": 55.754167,\n        \"lon\": 37.620000\n    },\n    \"paid\": true,\n    \"participantLimit\": 0,\n    \"requestModeration\": false,\n    \"title\": \"{{eventTitle2}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId}}/events",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Publish event2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Event2 is published\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.state).to.eql('PUBLISHED');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"stateAction\": \"PUBLISH_EVENT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/admin/events/{{eventId2}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "admin",
+                "events",
+                "{{eventId2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participants request event2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Request confirmed for event2\", function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('CONFIRMED');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/requests?eventId={{eventId2}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "{{eventId2}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participant2 request event2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Request confirmed for event2\", function () {",
+                  "    pm.expect(pm.response.json().status).to.eql('CONFIRMED');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{url}}/users/{{userId3}}/requests?eventId={{eventId2}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId3}}",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "eventId",
+                  "value": "{{eventId2}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rating Success",
+      "item": [
+        {
+          "name": "Participant1 likes event1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has rating fields\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.all.keys('eventId', 'eventTitle', 'likes', 'dislikes', 'rating');",
+                  "});",
+                  "",
+                  "pm.test(\"Likes=1, dislikes=0, rating=1\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.likes, '\"likes\" must be 1').to.eql(1);",
+                  "    pm.expect(json.dislikes, '\"dislikes\" must be 0').to.eql(0);",
+                  "    pm.expect(json.rating, '\"rating\" must be 1').to.eql(1);",
+                  "",
+                  "    const eventId = pm.collectionVariables.get(\"eventId\");",
+                  "    pm.expect(json.eventId, '\"eventId\" must match').to.eql(Number(eventId));",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participant2 dislikes event1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Likes=1, dislikes=1, rating=0 (1 like + 1 dislike)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.likes, '\"likes\" must be 1').to.eql(1);",
+                  "    pm.expect(json.dislikes, '\"dislikes\" must be 1').to.eql(1);",
+                  "    pm.expect(json.rating, '\"rating\" must be 0').to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId3}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId3}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participant2 changes to like event1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Rating changed: likes=2, dislikes=0, rating=2\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.likes, '\"likes\" must be 2').to.eql(2);",
+                  "    pm.expect(json.dislikes, '\"dislikes\" must be 0').to.eql(0);",
+                  "    pm.expect(json.rating, '\"rating\" must be 2').to.eql(2);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId3}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId3}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Participant1 likes event2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.expect(pm.response.code).to.eql(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Event2 got 1 like\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.likes).to.eql(1);",
+                  "    pm.expect(json.rating).to.eql(1);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/ratings/{{eventId2}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "ratings",
+                "{{eventId2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get my ratings participant1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Participant1 has 2 ratings\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.length, 'participant1 should have rated 2 events').to.eql(2);",
+                  "});",
+                  "",
+                  "pm.test(\"Each rating has required fields\", function () {",
+                  "    const json = pm.response.json();",
+                  "    json.forEach(item => {",
+                  "        pm.expect(item).to.have.all.keys('eventId', 'eventTitle', 'positive');",
+                  "        pm.expect(item.positive).to.be.a('boolean');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Both ratings are likes (positive=true)\", function () {",
+                  "    const json = pm.response.json();",
+                  "    json.forEach(item => {",
+                  "        pm.expect(item.positive, '\"positive\" must be true').to.eql(true);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/ratings",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "ratings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove like event1 participant1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check event1 rating after removal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Rating decreased after removal\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.likes, '\"likes\" must be 1 after removal').to.eql(1);",
+                  "    pm.expect(json.dislikes, '\"dislikes\" must be 0').to.eql(0);",
+                  "    pm.expect(json.rating, '\"rating\" must be 1 after removal').to.eql(1);",
+                  "});",
+                  "",
+                  "pm.test(\"EventId matches\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const eventId = pm.collectionVariables.get(\"eventId\");",
+                  "    pm.expect(json.eventId, '\"eventId\" must match').to.eql(Number(eventId));",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/ratings/events/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "ratings",
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Rating Errors",
+      "item": [
+        {
+          "name": "Organizer cannot rate own event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409 - cannot rate own event\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response has message\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message');",
+                  "    pm.expect(json.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cannot rate twice same score",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 409 - already rated with same score\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test(\"Error has status CONFLICT\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json.status).to.include('CONFLICT');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId3}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId3}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Non-existent user cannot rate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 - user not found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error has NOT_FOUND status\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.status).to.include('NOT_FOUND');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/999999/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "999999",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Non-existent event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 - event not found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"positive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/ratings/999999",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "ratings",
+                "999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove non-existent rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404 - rating not found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/users/{{userId}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Missing required field positive",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 - missing required field\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{url}}/users/{{userId2}}/ratings/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "{{userId2}}",
+                "ratings",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Public Ratings",
+      "item": [
+        {
+          "name": "Get public event rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has all required fields\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.all.keys('eventId', 'eventTitle', 'likes', 'dislikes', 'rating');",
+                  "});",
+                  "",
+                  "pm.test(\"EventId matches\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const eventId = pm.collectionVariables.get(\"eventId\");",
+                  "    pm.expect(json.eventId, '\"eventId\" must match').to.eql(Number(eventId));",
+                  "});",
+                  "",
+                  "pm.test(\"Rating values are numbers\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.likes).to.be.a('number');",
+                  "    pm.expect(json.dislikes).to.be.a('number');",
+                  "    pm.expect(json.rating).to.be.a('number');",
+                  "    pm.expect(json.rating).to.eql(json.likes - json.dislikes);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/ratings/events/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "ratings",
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get top events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array with max 5 elements\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    pm.expect(json.length, 'max 5 elements').to.be.at.most(5);",
+                  "});",
+                  "",
+                  "pm.test(\"Each item has required fields\", function () {",
+                  "    const json = pm.response.json();",
+                  "    json.forEach(item => {",
+                  "        pm.expect(item).to.have.property('eventId');",
+                  "        pm.expect(item).to.have.property('eventTitle');",
+                  "        pm.expect(item).to.have.property('rating');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Events sorted by rating descending\", function () {",
+                  "    const json = pm.response.json();",
+                  "    for (let i = 0; i < json.length - 1; i++) {",
+                  "        pm.expect(json[i].rating, 'must be sorted descending')",
+                  "            .to.be.at.least(json[i + 1].rating);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Our events are in top\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const eventId = Number(pm.collectionVariables.get(\"eventId\"));",
+                  "    const eventId2 = Number(pm.collectionVariables.get(\"eventId2\"));",
+                  "    const ids = json.map(e => e.eventId);",
+                  "    pm.expect(ids, 'event1 or event2 must be in top').to.include.oneOf([eventId, eventId2]);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/ratings/events/top?size=5",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "ratings",
+                "events",
+                "top"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get organizer rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has all fields\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.all.keys('userId', 'userName', 'totalRating', 'eventsCount');",
+                  "});",
+                  "",
+                  "pm.test(\"Organizer userId matches\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const userId = pm.collectionVariables.get(\"userId\");",
+                  "    pm.expect(json.userId, '\"userId\" must match').to.eql(Number(userId));",
+                  "});",
+                  "",
+                  "pm.test(\"Organizer has rated events\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.eventsCount, 'organizer must have rated events').to.be.at.least(1);",
+                  "});",
+                  "",
+                  "pm.test(\"TotalRating is a number\", function () {",
+                  "    pm.expect(pm.response.json().totalRating).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/ratings/users/{{userId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "ratings",
+                "users",
+                "{{userId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get top organizers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Each organizer has required fields\", function () {",
+                  "    const json = pm.response.json();",
+                  "    json.forEach(item => {",
+                  "        pm.expect(item).to.have.all.keys('userId', 'userName', 'totalRating', 'eventsCount');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Sorted by totalRating descending\", function () {",
+                  "    const json = pm.response.json();",
+                  "    for (let i = 0; i < json.length - 1; i++) {",
+                  "        pm.expect(json[i].totalRating, 'must be sorted descending')",
+                  "            .to.be.at.least(json[i + 1].totalRating);",
+                  "    }",
+                  "});",
+                  "",
+                  "pm.test(\"Our organizer is in top\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const userId = Number(pm.collectionVariables.get(\"userId\"));",
+                  "    const ids = json.map(o => o.userId);",
+                  "    pm.expect(ids, 'our organizer must appear in top').to.include(userId);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/ratings/users/top?size=5",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "ratings",
+                "users",
+                "top"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rating for non-existent event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/ratings/events/999999",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "ratings",
+                "events",
+                "999999"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Full event response has rating field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Full event has rating field\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('rating');",
+                  "    pm.expect(json.rating).to.be.a('number');",
+                  "});",
+                  "",
+                  "pm.test(\"Event id matches\", function () {",
+                  "    const json = pm.response.json();",
+                  "    const eventId = pm.collectionVariables.get(\"eventId\");",
+                  "    pm.expect(json.id).to.eql(Number(eventId));",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/events/{{eventId}}",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "events",
+                "{{eventId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Events list has rating field",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Events list items have rating field\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    if (json.length > 0) {",
+                  "        pm.expect(json[0]).to.have.property('rating');",
+                  "        pm.expect(json[0].rating).to.be.a('number');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/events",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sort events by rating",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Events sorted by rating descending\", function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('array');",
+                  "    for (let i = 0; i < json.length - 1; i++) {",
+                  "        const a = json[i].rating != null ? json[i].rating : 0;",
+                  "        const b = json[i + 1].rating != null ? json[i + 1].rating : 0;",
+                  "        pm.expect(a, 'must be sorted descending').to.be.at.least(b);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{url}}/events?sort=RATING",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "events"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "RATING"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "API = class {",
+          "    constructor(postman, verbose = false, baseUrl = pm.collectionVariables.get(\"url\")) {",
+          "        this.baseUrl = baseUrl;",
+          "        this.pm = postman;",
+          "        this._verbose = verbose;",
+          "    }",
+          "",
+          "    async post(path, body, errorText = \"Ошибка при выполнении post-запроса: \", verbose = null) {",
+          "        return this.sendRequest(\"POST\", path, body, errorText, verbose);",
+          "    }",
+          "",
+          "    async patch(path, body = null, errorText = \"Ошибка при выполнении patch-запроса: \", verbose = null) {",
+          "        return this.sendRequest(\"PATCH\", path, body, errorText, verbose);",
+          "    }",
+          "",
+          "    async get(path, errorText = \"Ошибка при выполнении get-запроса: \", verbose = null) {",
+          "        return this.sendRequest(\"GET\", path, null, errorText, verbose);",
+          "    }",
+          "",
+          "    async delete(path, errorText = \"Ошибка при выполнении delete-запроса: \", verbose = null) {",
+          "        return this.sendRequest(\"DELETE\", path, null, errorText, verbose);",
+          "    }",
+          "",
+          "    async sendRequest(method, path, body = null, errorText = \"Ошибка: \", verbose = null) {",
+          "        return new Promise((resolve, reject) => {",
+          "            verbose = verbose == null ? this._verbose : verbose;",
+          "            const req = {",
+          "                url: this.baseUrl + path,",
+          "                method: method,",
+          "                header: { \"Content-Type\": \"application/json\" },",
+          "                body: body == null ? \"\" : JSON.stringify(body)",
+          "            };",
+          "            if (verbose) console.log(\"Запрос:\", req);",
+          "            try {",
+          "                this.pm.sendRequest(req, (error, response) => {",
+          "                    if (error) {",
+          "                        reject(new Error(errorText + error));",
+          "                        return;",
+          "                    }",
+          "                    if (verbose) console.log(\"Ответ:\", response.code, response.json());",
+          "                    if (response.stream.length === 0) {",
+          "                        resolve(null);",
+          "                    } else {",
+          "                        resolve(response.json());",
+          "                    }",
+          "                });",
+          "            } catch (err) {",
+          "                reject(err);",
+          "            }",
+          "        });",
+          "    }",
+          "};",
+          "",
+          "RandomUtils = class {",
+          "    getUser() {",
+          "        return {",
+          "            name: pm.variables.replaceIn('{{$randomFullName}}'),",
+          "            email: pm.variables.replaceIn('{{$randomEmail}}')",
+          "        };",
+          "    }",
+          "",
+          "    getCategory() {",
+          "        return {",
+          "            name: pm.variables.replaceIn('{{$randomWord}}') + pm.variables.replaceIn('{{$randomInt}}')",
+          "        };",
+          "    }",
+          "",
+          "    getEvent(catId, hoursFromNow = 5) {",
+          "        const moment = require('moment');",
+          "        const eventDate = moment().add(hoursFromNow, 'h').format('YYYY-MM-DD HH:mm:ss');",
+          "        const word = pm.variables.replaceIn('{{$randomWords}}');",
+          "        return {",
+          "            annotation: (\"Аннотация события: \" + word + \" \" + word).substring(0, 2000).padEnd(20, 'x'),",
+          "            category: catId,",
+          "            description: (\"Описание события: \" + word + \" \" + word + \" \" + word + \" подробное описание\").substring(0, 7000).padEnd(20, 'x'),",
+          "            eventDate: eventDate,",
+          "            location: { lat: 55.754167, lon: 37.620000 },",
+          "            paid: false,",
+          "            participantLimit: 0,",
+          "            requestModeration: false,",
+          "            title: (\"Событие: \" + word).substring(0, 120)",
+          "        };",
+          "    }",
+          "};"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": ""
+    },
+    {
+      "key": "userName",
+      "value": ""
+    },
+    {
+      "key": "userEmail",
+      "value": ""
+    },
+    {
+      "key": "userName2",
+      "value": ""
+    },
+    {
+      "key": "userEmail2",
+      "value": ""
+    },
+    {
+      "key": "userName3",
+      "value": ""
+    },
+    {
+      "key": "userEmail3",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "userId2",
+      "value": ""
+    },
+    {
+      "key": "userId3",
+      "value": ""
+    },
+    {
+      "key": "catId",
+      "value": ""
+    },
+    {
+      "key": "catName",
+      "value": ""
+    },
+    {
+      "key": "eventId",
+      "value": ""
+    },
+    {
+      "key": "eventId2",
+      "value": ""
+    },
+    {
+      "key": "eventTitle",
+      "value": ""
+    },
+    {
+      "key": "eventTitle2",
+      "value": ""
+    },
+    {
+      "key": "localDate",
+      "value": ""
+    },
+    {
+      "key": "eventAnnotation",
+      "value": ""
+    },
+    {
+      "key": "eventDescription",
+      "value": ""
+    },
+    {
+      "key": "eventAnnotation2",
+      "value": ""
+    },
+    {
+      "key": "eventDescription2",
+      "value": ""
+    },
+    {
+      "key": "localDate2",
+      "value": ""
+    }
+  ]
+}

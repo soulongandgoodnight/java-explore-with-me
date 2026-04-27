@@ -15,11 +15,13 @@ import ru.practicum.model.Compilation;
 import ru.practicum.model.Event;
 import ru.practicum.model.RequestStatus;
 import ru.practicum.repository.CompilationRepository;
+import ru.practicum.repository.EventRatingRepository;
 import ru.practicum.repository.EventRepository;
 import ru.practicum.repository.RequestRepository;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,8 @@ public class CompilationService {
     private final EventRepository eventRepository;
 
     private final RequestRepository requestRepository;
+
+    private final EventRatingRepository ratingRepository;
 
     @Transactional
     public CompilationDto createCompilation(NewCompilationDto dto) {
@@ -108,11 +112,20 @@ public class CompilationService {
     }
 
     private Set<EventShortDto> toShortDtos(Set<Event> events) {
+        if (events.isEmpty()) {
+            return Set.of();
+        }
+        List<Long> ids = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+        Map<Long, Long> ratingsMap = ratingRepository.getRatingsMapByEventIds(ids);
+
         return events.stream()
                 .map(e -> EventMapper.toEventShortDto(e,
                         requestRepository.countByEventIdAndStatus(
                                 e.getId(), RequestStatus.CONFIRMED),
-                        0L))
+                        0L,
+                        ratingsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toSet());
     }
 }

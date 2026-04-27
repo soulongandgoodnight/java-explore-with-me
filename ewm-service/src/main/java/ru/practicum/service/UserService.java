@@ -9,6 +9,7 @@ import ru.practicum.dto.UserDto;
 import ru.practicum.exception.NotFoundException;
 import ru.practicum.mapper.UserMapper;
 import ru.practicum.model.User;
+import ru.practicum.repository.EventRatingRepository;
 import ru.practicum.repository.UserRepository;
 
 import java.util.List;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+
+    private final EventRatingRepository ratingRepository;
 
     public List<UserDto> getUsers(List<Long> ids, int from, int size) {
         PageRequest page = PageRequest.of(from / size, size);
@@ -45,6 +48,7 @@ public class UserService {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User with id=" + userId + " was not found");
         }
+        ratingRepository.deleteAllByUserId(userId);
         userRepository.deleteById(userId);
     }
 }
